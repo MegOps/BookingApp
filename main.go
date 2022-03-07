@@ -37,29 +37,45 @@ func main() {
 		fmt.Println("Please enter the amount of tickets you would like to purchase:")
 		fmt.Scan(&userTickets)
 
-		if userTickets >= int(remainingTickets) {
-			fmt.Printf("We only have %v tickets remaining. So we are unable to book %v tickets\n", remainingTickets, userTickets)
-			continue
+		isValidName := len(firstName) >= 2 && len(lastName) > 2
+		isValidEmail := strings.Contains(email, "@")
+		isValidTicketNumber := userTickets > 0 && userTickets < int(remainingTickets)
 
-		}
-		fmt.Printf("Success! %v %v booked %v tickets for the %v, Email sent to: %v \n", firstName, lastName, userTickets, conferenceName, email)
+		if isValidName && isValidEmail && isValidTicketNumber {
+			remainingTickets = remainingTickets - uint(userTickets)
+			bookings = append(bookings, firstName+" "+lastName)
+			fmt.Printf("Success! %v %v booked %v tickets for the %v, Email sent to: %v \n", firstName, lastName, userTickets, conferenceName, email)
+			fmt.Printf("%v tickets are now remaining for %v\n", remainingTickets, conferenceName)
 
-		bookings = append(bookings, firstName+" "+lastName)
+			firstNames := []string{}
+			for _, booking := range bookings {
+				var names = strings.Fields(booking)
+				firstNames = append(firstNames, names[0])
+			}
+			fmt.Printf("The first names of bookings are: %v\n", firstNames)
 
-		remainingTickets = remainingTickets - uint(userTickets)
-		fmt.Printf("%v tickets are now remaining for %v\n", remainingTickets, conferenceName)
+			if remainingTickets == 0 {
+				//end program
+				fmt.Printf("Our conference is booked out, come back next year!")
+				break
+			}
 
-		firstNames := []string{}
-		for _, booking := range bookings {
-			var names = strings.Fields(booking)
-			firstNames = append(firstNames, names[0])
-		}
-		fmt.Printf("The first names of bookings are: %v\n", firstNames)
-
-		if remainingTickets == 0 {
-			//end program
-			fmt.Printf("Our conference is booked out, come back next year!")
+		} else if userTickets == int(remainingTickets) {
+			fmt.Printf("Success! %v %v booked %v tickets for the %v, Email sent to: %v \n", firstName, lastName, userTickets, conferenceName, email)
+			fmt.Printf("You got the last tickets!")
 			break
+
+		} else {
+			if !isValidName {
+				fmt.Println("first name or last name you entered is too short")
+			}
+			if !isValidEmail {
+				fmt.Println("email invalid")
+			}
+			if !isValidTicketNumber {
+				fmt.Println("number of tickets you entered is invalid")
+			}
+			fmt.Println("youre input data is invalid")
 		}
 
 	}
