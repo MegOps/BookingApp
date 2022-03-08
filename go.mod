@@ -1,3 +1,3 @@
-module github.com/MegOps/BookingApp
+module booking-app
 
 go 1.17
