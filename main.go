@@ -3,7 +3,8 @@ package main
 import (
 	"booking-app/helper"
 	"fmt"
-	"strconv"
+	"sync"
+	"time"
 )
 
 //to run go run .
@@ -11,7 +12,17 @@ const conferenceTickets int = 50
 
 var conferenceName = "Go Conference"
 var remainingTickets uint = 50
-var bookings = make([]map[string]string, 0)
+var bookings = make([]UserData, 0)
+
+type UserData struct {
+	firstName       string
+	lastName        string
+	email           string
+	numberOfTickets uint
+}
+
+//the problem where the main thread ends before other threads complete can be fixed by
+var wg = sync.WaitGroup{}
 
 func main() {
 	greetUsers()
@@ -23,8 +34,13 @@ func main() {
 		if isValidName && isValidEmail && isValidTicketNumber {
 			bookTicket(userTickets, firstName, lastName, email)
 
+			//adds a thread so wg.add will run no matter when prog ends
+			wg.Add(1)
+			// the go makes it run concurrently in the background and will proceed to next task, will generate message in them iddle of next task
+			go sendTicket(userTickets, firstName, lastName, email)
+
 			firstNames := getFirstNames()
-			fmt.Printf("The first names of bookings are : %v\n", firstNames)
+			fmt.Printf("TuserTickets, firstName, lastName, emailhe first names of bookings are : %v\n", firstNames)
 			if remainingTickets == 0 {
 				//end program
 				fmt.Printf("Our conference is booked out, come back next year!")
@@ -48,7 +64,8 @@ func main() {
 			}
 			fmt.Println("youre input data is invalid")
 		}
-
+		//waits for goroutine to finish
+		wg.Wait()
 	}
 
 	//switch statement practice
@@ -81,7 +98,7 @@ func greetUsers() {
 func getFirstNames() []string {
 	firstNames := []string{}
 	for _, booking := range bookings {
-		firstNames = append(firstNames, booking["firstName"])
+		firstNames = append(firstNames, booking.firstName)
 	}
 	return firstNames
 }
@@ -111,14 +128,29 @@ func bookTicket(userTickets uint, firstName string, lastName string, email strin
 	remainingTickets = remainingTickets - uint(userTickets)
 
 	//create a map for a user, cannot mix data types
-	var userData = make(map[string]string)
-	userData["firstName"] = firstName
-	userData["lastName"] = lastName
-	userData["email"] = email
-	userData["numberOfTickets"] = strconv.FormatUint(uint64(userTickets), 10)
+	var userData = UserData{
+		firstName:       firstName,
+		lastName:        lastName,
+		email:           email,
+		numberOfTickets: userTickets,
+	}
+
+	// userData["firstName"] = firstName
+	// userData["lastName"] = lastName
+	// userData["email"] = email
+	// userData["numberOfTickets"] = strconv.FormatUint(uint64(userTickets), 10)
 
 	bookings = append(bookings, userData)
 	fmt.Printf("List of bookings is %v\n", bookings)
 	fmt.Printf("Success! %v %v booked %v tickets for the %v, Email sent to: %v \n", firstName, lastName, userTickets, conferenceName, email)
 	fmt.Printf("%v tickets are now remaining for %v\n", remainingTickets, conferenceName)
+}
+
+func sendTicket(userTickets uint, firstName string, lastName string, email string) {
+	time.Sleep(10 * time.Second)
+	var ticket = fmt.Sprintf("%v tickets for %v %v", userTickets, firstName, lastName)
+	fmt.Printf("########\n")
+	fmt.Printf("Sending ticket:\n %v \nto email address %v\n", ticket, email)
+	fmt.Printf("########\n")
+	wg.Done()
 }
